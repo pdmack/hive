@@ -189,6 +189,7 @@ public class Hive {
 
   public static void closeCurrent() {
     hiveDB.remove();
+    LOG.debug("removed current metastore.Hive instance from thread-local var");
   }
 
   /**
