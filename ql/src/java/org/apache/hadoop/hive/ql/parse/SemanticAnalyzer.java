@@ -4227,7 +4227,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         }
 
         first = false;
-        cols = cols.concat(colInfo.getInternalName());
+        cols = cols.concat(colInfo.getAlias());
 
         // Replace VOID type with string when the output is a temp table or
         // local files.
