@@ -770,6 +770,30 @@
 </property>
 
 <property>
+  <name>hive.merge.rcfile.block.level</name>
+  <value>true</value>
+  <description>Whether or not to use block level merge for RC files</description>
+</property>
+
+<property>
+  <name>hive.merge.orc.block.level</name>
+  <value>true</value>
+  <description>Whether or not to use block level merge for ORC files</description>
+</property>
+
+<property>
+  <name>hive.merge.input.format.block.level</name>
+  <value>org.apache.hadoop.hive.ql.io.rcfile.merge.RCFileBlockMergeInputFormat</value>
+  <description>Input format to use for RC file block level merge</description>
+</property>
+
+<property>
+  <name>hive.merge.orc.input.format.block.level</name>
+  <value>org.apache.hadoop.hive.ql.io.orc.OrcBlockMergeInputFormat</value>
+  <description>Input format to use for ORC file block level merge</description>
+</property>
+
+<property>
   <name>hive.heartbeat.interval</name>
   <value>1000</value>
   <description>Send a heartbeat after this interval - used by mapjoin and filter operators</description>

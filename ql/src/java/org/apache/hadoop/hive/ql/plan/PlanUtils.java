@@ -41,6 +41,9 @@ import org.apache.hadoop.hive.ql.io.HiveOutputFormat;
 import org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat;
 import org.apache.hadoop.hive.ql.io.RCFileInputFormat;
 import org.apache.hadoop.hive.ql.io.RCFileOutputFormat;
+import org.apache.hadoop.hive.ql.io.orc.OrcInputFormat;
+import org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat;
+import org.apache.hadoop.hive.ql.io.orc.OrcSerde;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.HiveStorageHandler;
@@ -258,6 +261,10 @@ public final class PlanUtils {
       inputFormat = RCFileInputFormat.class;
       outputFormat = RCFileOutputFormat.class;
       assert serdeClass == ColumnarSerDe.class;
+    } else if ("ORC".equalsIgnoreCase(fileFormat)) {
+      inputFormat = OrcInputFormat.class;
+      outputFormat = OrcOutputFormat.class;
+      assert serdeClass == OrcSerde.class;
     } else { // use TextFile by default
       inputFormat = TextInputFormat.class;
       outputFormat = IgnoreKeyTextOutputFormat.class;
@@ -685,8 +692,8 @@ public final class PlanUtils {
       List<List<Integer>> distinctColIndices,
       List<String> outputKeyColumnNames, List<String> outputValueColumnNames,
       boolean includeKey, int tag,
-      int numPartitionFields, int numReducers, boolean optimizeSkew
-      ) throws SemanticException {
+      int numPartitionFields, int numReducers,
+      boolean optimizeSkew) throws SemanticException {
     ArrayList<ExprNodeDesc> partitionCols = null;
 
     if (numPartitionFields >= keyCols.size()) {

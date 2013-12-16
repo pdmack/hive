@@ -122,28 +122,10 @@ STAGE PLANS:
     Stats-Aggr Operator
 
   Stage: Stage-3
-    Map Reduce
-      Alias -> Map Operator Tree:
-#### A masked pattern was here ####
-            File Output Operator
-              compressed: false
-              GlobalTableId: 0
-              table:
-                  input format: org.apache.hadoop.hive.ql.io.orc.OrcInputFormat
-                  output format: org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat
-                  name: default.orc_createas1b
+    Block level merge
 
   Stage: Stage-5
-    Map Reduce
-      Alias -> Map Operator Tree:
-#### A masked pattern was here ####
-            File Output Operator
-              compressed: false
-              GlobalTableId: 0
-              table:
-                  input format: org.apache.hadoop.hive.ql.io.orc.OrcInputFormat
-                  output format: org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat
-                  name: default.orc_createas1b
+    Block level merge
 
   Stage: Stage-6
     Move Operator
@@ -301,28 +283,10 @@ STAGE PLANS:
     Stats-Aggr Operator
 
   Stage: Stage-3
-    Map Reduce
-      Alias -> Map Operator Tree:
-#### A masked pattern was here ####
-            File Output Operator
-              compressed: false
-              GlobalTableId: 0
-              table:
-                  input format: org.apache.hadoop.hive.ql.io.orc.OrcInputFormat
-                  output format: org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat
-                  name: default.orc_createas1c
+    Block level merge
 
   Stage: Stage-5
-    Map Reduce
-      Alias -> Map Operator Tree:
-#### A masked pattern was here ####
-            File Output Operator
-              compressed: false
-              GlobalTableId: 0
-              table:
-                  input format: org.apache.hadoop.hive.ql.io.orc.OrcInputFormat
-                  output format: org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat
-                  name: default.orc_createas1c
+    Block level merge
 
   Stage: Stage-6
     Move Operator

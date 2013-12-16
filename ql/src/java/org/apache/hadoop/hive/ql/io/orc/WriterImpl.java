@@ -810,6 +810,7 @@ class WriterImpl implements Writer, MemoryManager.Callback {
      * and augments them with the final information as the stripe is written.
      * @throws IOException
      */
+    @Override
     void createRowIndexEntry() throws IOException {
       getFileStatistics().merge(indexStatistics);
       OrcProto.RowIndexEntry.Builder rowIndexEntry = getRowIndexEntry();
@@ -1333,6 +1334,20 @@ class WriterImpl implements Writer, MemoryManager.Callback {
     rowsInIndex = 0;
   }
 
+  void addStripe(StripeInformation si, byte[] data) throws IOException {
+    ensureWriter();
+    OrcProto.StripeInformation dirEntry =
+      OrcProto.StripeInformation.newBuilder()
+          .setOffset(rawWriter.getPos())
+          .setIndexLength(si.getIndexLength())
+          .setDataLength(si.getDataLength())
+          .setNumberOfRows(si.getNumberOfRows())
+          .setFooterLength(si.getFooterLength()).build();
+    stripes.add(dirEntry);
+    rowCount += si.getNumberOfRows();
+    rawWriter.write(data);
+  }
+
   private void flushStripe() throws IOException {
     ensureWriter();
     if (buildIndex && rowsInIndex != 0) {
@@ -1391,15 +1406,19 @@ class WriterImpl implements Writer, MemoryManager.Callback {
     }
   }
 
-  private void writeFileStatistics(OrcProto.Footer.Builder builder,
-                                   TreeWriter writer) throws IOException {
+  private int writeFileStatistics(OrcProto.Footer.Builder builder,
+      TreeWriter writer, ColumnStatisticsImpl[] columnStats, int column) {
+    if (columnStats != null) {
+      writer.fileStatistics.merge(columnStats[column++]);
+    }
     builder.addStatistics(writer.fileStatistics.serialize());
     for(TreeWriter child: writer.getChildrenWriters()) {
-      writeFileStatistics(builder, child);
+      column = writeFileStatistics(builder, child, columnStats, column);
     }
+    return column;
   }
 
-  private int writeFooter(long bodyLength) throws IOException {
+  private int writeFooter(long bodyLength, ColumnStatisticsImpl[] columnStats) throws IOException {
     ensureWriter();
     OrcProto.Footer.Builder builder = OrcProto.Footer.newBuilder();
     builder.setContentLength(bodyLength);
@@ -1413,7 +1432,7 @@ class WriterImpl implements Writer, MemoryManager.Callback {
       builder.addStripes(stripe);
     }
     // add the column statistics
-    writeFileStatistics(builder, treeWriter);
+    writeFileStatistics(builder, treeWriter, columnStats, 0);
     // add all of the user metadata
     for(Map.Entry<String, ByteString> entry: userMetadata.entrySet()) {
       builder.addMetadata(OrcProto.UserMetadataItem.newBuilder()
@@ -1480,12 +1499,16 @@ class WriterImpl implements Writer, MemoryManager.Callback {
 
   @Override
   public void close() throws IOException {
+    close(null);
+  }
+
+  void close(ColumnStatisticsImpl[] columnStats) throws IOException {
     // remove us from the memory manager so that we don't get any callbacks
     memoryManager.removeWriter(path);
     // actually close the file
     synchronized (this) {
       flushStripe();
-      int footerLength = writeFooter(rawWriter.getPos());
+      int footerLength = writeFooter(rawWriter.getPos(), columnStats);
       rawWriter.writeByte(writePostScript(footerLength));
       rawWriter.close();
     }

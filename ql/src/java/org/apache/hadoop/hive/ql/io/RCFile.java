@@ -208,7 +208,7 @@ public class RCFile {
    * <li>{the end of the key part}</li>
    * </ul>
    */
-  public static class KeyBuffer implements WritableComparable {
+  public static class KeyBuffer implements WritableComparable<KeyBuffer> {
     // each column's length in the value
     private int[] eachColumnValueLen = null;
     private int[] eachColumnUncompressedValueLen = null;
@@ -313,7 +313,7 @@ public class RCFile {
     }
 
     @Override
-    public int compareTo(Object arg0) {
+    public int compareTo(KeyBuffer arg0) {
       throw new RuntimeException("compareTo not supported in class "
           + this.getClass().getName());
     }
@@ -344,7 +344,7 @@ public class RCFile {
    * column_2_row_2_value,....]</li>
    * </ul>
    */
-  public static class ValueBuffer implements WritableComparable {
+  public static class ValueBuffer implements WritableComparable<ValueBuffer> {
 
     class LazyDecompressionCallbackImpl implements LazyDecompressionCallback {
 
@@ -572,7 +572,7 @@ public class RCFile {
     }
 
     @Override
-    public int compareTo(Object arg0) {
+    public int compareTo(ValueBuffer arg0) {
       throw new RuntimeException("compareTo not supported in class "
           + this.getClass().getName());
     }

@@ -45,7 +45,12 @@ import org.apache.hadoop.hive.ql.exec.TaskFactory;
 import org.apache.hadoop.hive.ql.exec.UnionOperator;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.io.RCFileInputFormat;
-import org.apache.hadoop.hive.ql.io.rcfile.merge.MergeWork;
+import org.apache.hadoop.hive.ql.io.merge.MergeWork;
+import org.apache.hadoop.hive.ql.io.orc.OrcBlockMergeInputFormat;
+import org.apache.hadoop.hive.ql.io.orc.OrcInputFormat;
+import org.apache.hadoop.hive.ql.io.orc.OrcMergeMapper;
+import org.apache.hadoop.hive.ql.io.rcfile.merge.RCFileBlockMergeInputFormat;
+import org.apache.hadoop.hive.ql.io.rcfile.merge.RCFileMergeMapper;
 import org.apache.hadoop.hive.ql.lib.Node;
 import org.apache.hadoop.hive.ql.lib.NodeProcessor;
 import org.apache.hadoop.hive.ql.lib.NodeProcessorCtx;
@@ -65,7 +70,9 @@ import org.apache.hadoop.hive.ql.plan.StatsWork;
 import org.apache.hadoop.hive.ql.plan.TableDesc;
 import org.apache.hadoop.hive.ql.plan.TableScanDesc;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
+import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.InputFormat;
+import org.apache.hadoop.mapred.Mapper;
 
 /**
  * Processor for the rule - table scan followed by reduce sink.
@@ -158,7 +165,7 @@ public class GenMRFileSink1 implements NodeProcessor {
 
     if (chDir) {
       // Merge the files in the destination table/partitions by creating Map-only merge job
-      // If underlying data is RCFile a RCFileBlockMerge task would be created.
+      // If underlying data is RCFile or OrcFile a BlockMerge task would be created.
       LOG.info("using CombineHiveInputformat for the merge job");
       createMRWorkForMergingFiles(fsOp, ctx, finalName);
     }
@@ -363,13 +370,31 @@ public class GenMRFileSink1 implements NodeProcessor {
         fsInputDesc.getTableInfo().getInputFileFormatClass().equals(RCFileInputFormat.class)) {
 
       // Check if InputFormatClass is valid
-      String inputFormatClass = conf.getVar(ConfVars.HIVEMERGEINPUTFORMATBLOCKLEVEL);
+      String inputFormatClass = conf.getVar(ConfVars.HIVEMERGERCFILEINPUTFORMATBLOCKLEVEL);
       try {
         Class c = (Class<? extends InputFormat>) Class.forName(inputFormatClass);
 
         LOG.info("RCFile format- Using block level merge");
-        cplan = createRCFileMergeTask(fsInputDesc, finalName,
-            dpCtx != null && dpCtx.getNumDPCols() > 0);
+        cplan = createBlockMergeTask(fsInputDesc, finalName,
+            dpCtx != null && dpCtx.getNumDPCols() > 0, RCFileMergeMapper.class,
+            RCFileInputFormat.class, RCFileBlockMergeInputFormat.class);
+      } catch (ClassNotFoundException e) {
+        String msg = "Illegal input format class: " + inputFormatClass;
+        throw new SemanticException(msg);
+      }
+
+    } else if (conf.getBoolVar(ConfVars.HIVEMERGEORCBLOCKLEVEL) &&
+        fsInputDesc.getTableInfo().getInputFileFormatClass().equals(OrcInputFormat.class)) {
+
+      // Check if InputFormatClass is valid
+      String inputFormatClass = conf.getVar(ConfVars.HIVEMERGEORCINPUTFORMATBLOCKLEVEL);
+      try {
+        Class c = (Class<? extends InputFormat>) Class.forName(inputFormatClass);
+
+        LOG.info("ORCFile format- Using block level merge");
+        cplan = createBlockMergeTask(fsInputDesc, finalName,
+            dpCtx != null && dpCtx.getNumDPCols() > 0, OrcMergeMapper.class,
+            OrcInputFormat.class, OrcBlockMergeInputFormat.class);
       } catch (ClassNotFoundException e) {
         String msg = "Illegal input format class: " + inputFormatClass;
         throw new SemanticException(msg);
@@ -510,21 +535,24 @@ public class GenMRFileSink1 implements NodeProcessor {
    * @return MergeWork if table is stored as RCFile,
    *         null otherwise
    */
-  private MapredWork createRCFileMergeTask(FileSinkDesc fsInputDesc,
-      String finalName, boolean hasDynamicPartitions) throws SemanticException {
+  private MapredWork createBlockMergeTask(FileSinkDesc fsInputDesc,
+      String finalName, boolean hasDynamicPartitions,
+      Class<? extends Mapper> mapperClass,
+      Class<? extends FileInputFormat> inputFormatClass,
+      Class<? extends FileInputFormat> mergeFormatClass) throws SemanticException {
 
     String inputDir = fsInputDesc.getFinalDirName();
     TableDesc tblDesc = fsInputDesc.getTableInfo();
 
-    if (tblDesc.getInputFileFormatClass().equals(RCFileInputFormat.class)) {
+    if (tblDesc.getInputFileFormatClass().equals(inputFormatClass)) {
       ArrayList<String> inputDirs = new ArrayList<String>();
       if (!hasDynamicPartitions
           && !isSkewedStoredAsDirs(fsInputDesc)) {
         inputDirs.add(inputDir);
       }
 
-      MergeWork work = new MergeWork(inputDirs, finalName,
-          hasDynamicPartitions, fsInputDesc.getDynPartCtx());
+      MergeWork work = new MergeWork(inputDirs, finalName, hasDynamicPartitions,
+          fsInputDesc.getDynPartCtx(), mapperClass, mergeFormatClass);
       LinkedHashMap<String, ArrayList<String>> pathToAliases =
           new LinkedHashMap<String, ArrayList<String>>();
       pathToAliases.put(inputDir, (ArrayList<String>) inputDirs.clone());
@@ -542,7 +570,7 @@ public class GenMRFileSink1 implements NodeProcessor {
       return work;
     }
 
-    throw new SemanticException("createRCFileMergeTask called on non-RCFile table");
+    throw new SemanticException("createBlockMergeTask called with mismatching input formats");
   }
 
   /**
