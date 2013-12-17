@@ -79,7 +79,7 @@ class MetaStoreDirectSql {
       String dbName, String tblName, List<String> partNames) throws MetaException {
     String list = repeat(",?", partNames.size()).substring(1);
     return getPartitionsViaSqlFilterInternal(dbName, tblName,
-        "and PARTITIONS.PART_NAME in (" + list + ")" , partNames, new ArrayList<String>());
+        "and \"PARTITIONS\".\"PART_NAME\" in (" + list + ")" , partNames, new ArrayList<String>());
   }
 
   /**
