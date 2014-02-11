@@ -141,4 +141,14 @@ public interface Reader {
                     boolean[] include, SearchArgument sarg,
                     String[] neededColumns) throws IOException;
 
+  /**
+   * Create a StripeReader that will start reading at the first stripe after
+   * offset up to the stripe that starts at offset + length.
+   * @param offset a byte offset in the file
+   * @param length a number of bytes in the file
+   * @return a new StripeReader that will read the specified stripes.
+   * @throws IOException
+   */
+  StripeReader stripes(long offset, long length) throws IOException;
+
 }

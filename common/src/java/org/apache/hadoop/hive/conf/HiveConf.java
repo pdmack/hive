@@ -341,7 +341,7 @@ public class HiveConf extends Configuration {
     METASTORE_EXECUTE_SET_UGI("hive.metastore.execute.setugi", false),
     METASTORE_PARTITION_NAME_WHITELIST_PATTERN(
         "hive.metastore.partition.name.whitelist.pattern", ""),
-
+    METASTORE_TRY_DIRECT_SQL("hive.metastore.try.direct.sql", true),
 
     // Default parameters for creating tables
     NEWTABLEDEFAULTPARA("hive.table.parameters.default", ""),
@@ -480,8 +480,11 @@ public class HiveConf extends Configuration {
     HIVEMERGEMAPFILESSIZE("hive.merge.size.per.task", (long) (256 * 1000 * 1000)),
     HIVEMERGEMAPFILESAVGSIZE("hive.merge.smallfiles.avgsize", (long) (16 * 1000 * 1000)),
     HIVEMERGERCFILEBLOCKLEVEL("hive.merge.rcfile.block.level", true),
-    HIVEMERGEINPUTFORMATBLOCKLEVEL("hive.merge.input.format.block.level",
+    HIVEMERGEORCBLOCKLEVEL("hive.merge.orc.block.level", true),
+    HIVEMERGERCFILEINPUTFORMATBLOCKLEVEL("hive.merge.input.format.block.level",
         "org.apache.hadoop.hive.ql.io.rcfile.merge.RCFileBlockMergeInputFormat"),
+    HIVEMERGEORCINPUTFORMATBLOCKLEVEL("hive.merge.orc.input.format.block.level",
+        "org.apache.hadoop.hive.ql.io.orc.OrcBlockMergeInputFormat"),
     HIVEMERGECURRENTJOBHASDYNAMICPARTITIONS(
         "hive.merge.current.job.has.dynamic.partitions", false),
 
@@ -738,12 +741,12 @@ public class HiveConf extends Configuration {
 
     /* The following section contains all configurations used for list bucketing feature.*/
     /* This is not for clients. but only for block merge task. */
-    /* This is used by BlockMergeTask to send out flag to RCFileMergeMapper */
+    /* This is used by BlockMergeTask to send out flag to MergeMapper */
     /* about alter table...concatenate and list bucketing case. */
     HIVEMERGECURRENTJOBCONCATENATELISTBUCKETING(
         "hive.merge.current.job.concatenate.list.bucketing", true),
     /* This is not for clients. but only for block merge task. */
-    /* This is used by BlockMergeTask to send out flag to RCFileMergeMapper */
+    /* This is used by BlockMergeTask to send out flag to MergeMapper */
     /* about depth of list bucketing. */
     HIVEMERGECURRENTJOBCONCATENATELISTBUCKETINGDEPTH(
             "hive.merge.current.job.concatenate.list.bucketing.depth", 0),

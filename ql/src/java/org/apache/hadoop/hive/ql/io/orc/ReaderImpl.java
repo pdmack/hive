@@ -335,4 +335,9 @@ final class ReaderImpl implements Reader {
         include, footer.getRowIndexStride(), sarg, columnNames);
   }
 
+  @Override
+  public StripeReader stripes(long offset, long length) throws IOException {
+    return new StripeReader(this.getStripes(), fileSystem, path, offset, length);
+  }
+
 }

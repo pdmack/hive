@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.hadoop.hive.ql.io.rcfile.merge;
+package org.apache.hadoop.hive.ql.io.merge;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -42,6 +42,10 @@ import org.apache.hadoop.hive.ql.exec.Throttle;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.io.CombineHiveInputFormat;
 import org.apache.hadoop.hive.ql.io.HiveOutputFormatImpl;
+import org.apache.hadoop.hive.ql.io.orc.OrcBlockMergeInputFormat;
+import org.apache.hadoop.hive.ql.io.orc.OrcMergeMapper;
+import org.apache.hadoop.hive.ql.io.rcfile.merge.RCFileBlockMergeInputFormat;
+import org.apache.hadoop.hive.ql.io.rcfile.merge.RCFileMergeMapper;
 import org.apache.hadoop.hive.ql.plan.api.StageType;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.ql.session.SessionState.LogHelper;
@@ -52,6 +56,7 @@ import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.log4j.Appender;
 import org.apache.log4j.FileAppender;
@@ -152,7 +157,7 @@ public class BlockMergeTask extends Task<MergeWork> implements Serializable,
       return 6;
     }
 
-    RCFileBlockMergeOutputFormat.setMergeOutputPath(job, new Path(outputPath));
+    BlockMergeOutputFormat.setMergeOutputPath(job, new Path(outputPath));
 
     job.setOutputKeyClass(NullWritable.class);
     job.setOutputValueClass(NullWritable.class);
@@ -244,7 +249,7 @@ public class BlockMergeTask extends Task<MergeWork> implements Serializable,
           HadoopJobExecHelper.runningJobKillURIs.remove(rj.getJobID());
           jobID = rj.getID().toString();
         }
-        RCFileMergeMapper.jobClose(outputPath, success, job, console,
+        MergeMapper.jobClose(outputPath, success, job, console,
           work.getDynPartCtx(), null);
       } catch (Exception e) {
       }
@@ -261,7 +266,7 @@ public class BlockMergeTask extends Task<MergeWork> implements Serializable,
 
   @Override
   public String getName() {
-    return "RCFile Merge";
+    return "(O)RCFile Merge";
   }
 
   public static String INPUT_SEPERATOR = ":";
@@ -270,6 +275,8 @@ public class BlockMergeTask extends Task<MergeWork> implements Serializable,
     String inputPathStr = null;
     String outputDir = null;
     String jobConfFileName = null;
+    Class<? extends Mapper> mapperClass = RCFileMergeMapper.class;
+    Class<? extends FileInputFormat> inputFormatClass = RCFileBlockMergeInputFormat.class;
 
     try {
       for (int i = 0; i < args.length; i++) {
@@ -279,6 +286,15 @@ public class BlockMergeTask extends Task<MergeWork> implements Serializable,
           jobConfFileName = args[++i];
         } else if (args[i].equals("-outputDir")) {
           outputDir = args[++i];
+        } else if (args[i].equals("-inputformat")) {
+          String inputFormat = args[++i];
+          if (inputFormat.equalsIgnoreCase("ORC")) {
+            mapperClass = OrcMergeMapper.class;
+            inputFormatClass = OrcBlockMergeInputFormat.class;
+          } else if (!inputFormat.equalsIgnoreCase("RCFile")) {
+            System.err.println("Only RCFile and OrcFile inputs are supported.");
+            printUsage();
+          }
         }
       }
     } catch (IndexOutOfBoundsException e) {
@@ -340,7 +356,7 @@ public class BlockMergeTask extends Task<MergeWork> implements Serializable,
       }
     }
 
-    MergeWork mergeWork = new MergeWork(inputPaths, outputDir);
+    MergeWork mergeWork = new MergeWork(inputPaths, outputDir, mapperClass, inputFormatClass);
     DriverContext driverCxt = new DriverContext();
     BlockMergeTask taskExec = new BlockMergeTask();
     taskExec.initialize(hiveConf, null, driverCxt);
@@ -355,7 +371,7 @@ public class BlockMergeTask extends Task<MergeWork> implements Serializable,
 
   private static void printUsage() {
     System.err.println("BlockMergeTask -input <colon seperated input paths>  "
-        + "-outputDir outputDir [-jobconffile <job conf file>] ");
+        + "-outputDir outputDir [-jobconffile <job conf file>] [-inputformat ORC|RCFile]");
     System.exit(1);
   }
 

@@ -3520,6 +3520,9 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
 
     List<List<Integer>> distinctColIndices = getDistinctColIndicesForReduceSink(parseInfo, dest,
         reduceKeys, reduceSinkInputRowResolver, reduceSinkOutputRowResolver, outputKeyColumnNames);
+    if (!parseInfo.getDistinctFuncExprsForClause(dest).isEmpty()) {
+        numPartitionCols = grpByExprs.size();
+    }
 
     ArrayList<ExprNodeDesc> reduceValues = new ArrayList<ExprNodeDesc>();
     HashMap<String, ASTNode> aggregationTrees = parseInfo
@@ -3547,8 +3550,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       }
     }
 
-    if(!optimizeSkew) {
-      numPartitionCols = grpByExprs.size();
+    if (!optimizeSkew) {
+      numPartitionCols = numPartitionFields;
     }
 
     ReduceSinkOperator rsOp = (ReduceSinkOperator) putOpInsertMap(
@@ -3557,7 +3560,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
                 groupingSetsPresent ? grpByExprs.size() + 1 : grpByExprs.size(),
                 reduceValues, distinctColIndices,
                 outputKeyColumnNames, outputValueColumnNames, true, -1, numPartitionCols,
-                numReducers, optimizeSkew),
+                numReducers,optimizeSkew),
             new RowSchema(reduceSinkOutputRowResolver.getColumnInfos()), inputOperatorInfo),
         reduceSinkOutputRowResolver);
     rsOp.setColumnExprMap(colExprMap);
@@ -3742,7 +3745,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         OperatorFactory.getAndMakeChild(PlanUtils.getReduceSinkDesc(reduceKeys,
             grpByExprs.size(), reduceValues, distinctColIndices,
             outputKeyColumnNames, outputValueColumnNames, true, -1, grpByExprs.size(),
-            -1, optimizeSkew), new RowSchema(reduceSinkOutputRowResolver
+            -1, false), new RowSchema(reduceSinkOutputRowResolver
             .getColumnInfos()), inputOperatorInfo), reduceSinkOutputRowResolver);
     rsOp.setColumnExprMap(colExprMap);
     return rsOp;
@@ -4663,7 +4666,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
               false,
               -1,
               true,
-              groupingSetsPresent, true);
+              groupingSetsPresent,
+              false);
 
       // ////// Generate GroupbyOperator for a partial aggregation
       Operator groupByOperatorInfo2 = genGroupByPlanGroupByOperator1(parseInfo,
@@ -4699,7 +4703,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
               false,
               1,
               true,
-              groupingSetsPresent, false);
+              groupingSetsPresent,
+              false);
 
       return genGroupByPlanGroupByOperator2MR(parseInfo, dest,
           reduceSinkOperatorInfo, GroupByDesc.Mode.FINAL, genericUDAFEvaluators, false);
@@ -6265,26 +6270,18 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
 
   private List<String> getMapSideJoinTables(QB qb) {
     List<String> cols = new ArrayList<String>();
-
-
     ASTNode hints = qb.getParseInfo().getHints();
     for (int pos = 0; pos < hints.getChildCount(); pos++) {
       ASTNode hint = (ASTNode) hints.getChild(pos);
       if (((ASTNode) hint.getChild(0)).getToken().getType() == HiveParser.TOK_MAPJOIN) {
-        // the user has specified to ignore mapjoin hint
-        if (!conf.getBoolVar(HiveConf.ConfVars.HIVEIGNOREMAPJOINHINT)) {
-          ASTNode hintTblNames = (ASTNode) hint.getChild(1);
-          int numCh = hintTblNames.getChildCount();
-          for (int tblPos = 0; tblPos < numCh; tblPos++) {
-            String tblName = ((ASTNode) hintTblNames.getChild(tblPos)).getText()
-                .toLowerCase();
-            if (!cols.contains(tblName)) {
-              cols.add(tblName);
-            }
+        ASTNode hintTblNames = (ASTNode) hint.getChild(1);
+        int numCh = hintTblNames.getChildCount();
+        for (int tblPos = 0; tblPos < numCh; tblPos++) {
+          String tblName = ((ASTNode) hintTblNames.getChild(tblPos)).getText()
+              .toLowerCase();
+          if (!cols.contains(tblName)) {
+            cols.add(tblName);
           }
-        }
-        else {
-          queryProperties.setMapJoinRemoved(true);
         }
       }
     }

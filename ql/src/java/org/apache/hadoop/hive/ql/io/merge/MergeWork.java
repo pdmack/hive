@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.hadoop.hive.ql.io.rcfile.merge;
+package org.apache.hadoop.hive.ql.io.merge;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -30,6 +30,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.io.CombineHiveInputFormat;
+import org.apache.hadoop.hive.ql.io.rcfile.merge.RCFileBlockMergeInputFormat;
 import org.apache.hadoop.hive.ql.plan.DynamicPartitionCtx;
 import org.apache.hadoop.hive.ql.plan.Explain;
 import org.apache.hadoop.hive.ql.plan.ListBucketingCtx;
@@ -51,22 +52,30 @@ public class MergeWork extends MapredWork implements Serializable {
   private boolean isListBucketingAlterTableConcatenate;
   private ListBucketingCtx listBucketingCtx;
 
+  private Class<? extends Mapper> mapperClass;
+  private Class<? extends InputFormat> inputFormatClass;
+
   public MergeWork() {
   }
 
-  public MergeWork(List<String> inputPaths, String outputDir) {
-    this(inputPaths, outputDir, false, null);
+  public MergeWork(List<String> inputPaths, String outputDir, Class<? extends Mapper> mapperClass,
+                   Class<? extends InputFormat> inputFormatClass) {
+    this(inputPaths, outputDir, false, null, mapperClass, inputFormatClass);
   }
 
+  @SuppressWarnings("unchecked")
   public MergeWork(List<String> inputPaths, String outputDir,
-      boolean hasDynamicPartitions, DynamicPartitionCtx dynPartCtx) {
+      boolean hasDynamicPartitions, DynamicPartitionCtx dynPartCtx,
+      Class<? extends Mapper> mapperClass, Class<? extends InputFormat> inputFormatClass) {
     super();
     this.inputPaths = inputPaths;
     this.outputDir = outputDir;
     this.hasDynamicPartitions = hasDynamicPartitions;
     this.dynPartCtx = dynPartCtx;
+    this.mapperClass = mapperClass;
+    this.inputFormatClass = inputFormatClass;
     PartitionDesc partDesc = new PartitionDesc();
-    partDesc.setInputFileFormatClass(RCFileBlockMergeInputFormat.class);
+    partDesc.setInputFileFormatClass(inputFormatClass);
     if(this.getPathToPartitionInfo() == null) {
       this.setPathToPartitionInfo(new LinkedHashMap<String, PartitionDesc>());
     }
@@ -95,7 +104,7 @@ public class MergeWork extends MapredWork implements Serializable {
   }
 
   public Class<? extends Mapper> getMapperClass() {
-    return RCFileMergeMapper.class;
+    return mapperClass;
   }
 
   @Override
@@ -121,18 +130,23 @@ public class MergeWork extends MapredWork implements Serializable {
     this.hasDynamicPartitions = hasDynamicPartitions;
   }
 
+  public Class<? extends InputFormat> getInputFormatClass() {
+    return inputFormatClass;
+  }
+
+  public void setInputFormatClass(Class<? extends InputFormat> inputFormatClass) {
+    this.inputFormatClass = inputFormatClass;
+  }
+
+  public void setMapperClass(Class<? extends Mapper> mapperClass) {
+    this.mapperClass = mapperClass;
+  }
+
   @Override
   public void resolveDynamicPartitionStoredAsSubDirsMerge(HiveConf conf, Path path,
       TableDesc tblDesc, ArrayList<String> aliases, PartitionDesc partDesc) {
 
-    String inputFormatClass = conf.getVar(HiveConf.ConfVars.HIVEMERGEINPUTFORMATBLOCKLEVEL);
-    try {
-      partDesc.setInputFileFormatClass((Class <? extends InputFormat>)
-          Class.forName(inputFormatClass));
-    } catch (ClassNotFoundException e) {
-      String msg = "Merge input format class not found";
-      throw new RuntimeException(msg);
-    }
+    partDesc.setInputFileFormatClass(inputFormatClass);
     super.resolveDynamicPartitionStoredAsSubDirsMerge(conf, path, tblDesc, aliases, partDesc);
 
     // Add the DP path to the list of input paths

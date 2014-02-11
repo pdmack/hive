@@ -73,8 +73,8 @@ STAGE PLANS:
                         type: string
                   sort order: +
                   Map-reduce partition columns:
-                        expr: rand()
-                        type: double
+                        expr: _col0
+                        type: string
                   tag: -1
                   value expressions:
                         expr: _col1

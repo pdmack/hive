@@ -83,6 +83,8 @@ STAGE PLANS:
                           type: string
                           expr: _col1
                           type: string
+                          expr: _col2
+                          type: string
                     tag: -1
                     value expressions:
                           expr: _col3
@@ -228,6 +230,8 @@ STAGE PLANS:
                           expr: _col0
                           type: string
                           expr: _col1
+                          type: string
+                          expr: _col2
                           type: string
                     tag: -1
                     value expressions:

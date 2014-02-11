@@ -65,6 +65,11 @@ import org.apache.hadoop.hive.ql.index.HiveIndex.IndexType;
 import org.apache.hadoop.hive.ql.index.HiveIndexHandler;
 import org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat;
 import org.apache.hadoop.hive.ql.io.RCFileInputFormat;
+import org.apache.hadoop.hive.ql.io.orc.OrcBlockMergeInputFormat;
+import org.apache.hadoop.hive.ql.io.orc.OrcInputFormat;
+import org.apache.hadoop.hive.ql.io.orc.OrcMergeMapper;
+import org.apache.hadoop.hive.ql.io.rcfile.merge.RCFileBlockMergeInputFormat;
+import org.apache.hadoop.hive.ql.io.rcfile.merge.RCFileMergeMapper;
 import org.apache.hadoop.hive.ql.lib.Node;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -1338,9 +1343,15 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
       }
 
       // throw a HiveException for non-rcfile.
-      if (!inputFormatClass.equals(RCFileInputFormat.class)) {
+      if (inputFormatClass.equals(RCFileInputFormat.class)) {
+        mergeDesc.setMergeMapperClass(RCFileMergeMapper.class);
+        mergeDesc.setMergeInputFormatClass(RCFileBlockMergeInputFormat.class);
+      } else if (inputFormatClass.equals(OrcInputFormat.class)) {
+        mergeDesc.setMergeMapperClass(OrcMergeMapper.class);
+        mergeDesc.setMergeInputFormatClass(OrcBlockMergeInputFormat.class);
+      } else {
         throw new SemanticException(
-            "Only RCFileFormat is supportted right now.");
+            "Only RCFileFormat and OrcFileFormat are supportted right now.");
       }
 
       // throw a HiveException if the table/partition is bucketized
