@@ -202,8 +202,8 @@ class MetaStoreDirectSql {
       part.setValues(new ArrayList<String>());
       part.setDbName(dbName);
       part.setTableName(tblName);
-      if (fields[4] != null) part.setCreateTime((int)(long)fields[4]);
-      if (fields[5] != null) part.setLastAccessTime((int)(long)fields[5]);
+      if (fields[4] != null) part.setCreateTime((Integer)fields[4]);
+      if (fields[5] != null) part.setLastAccessTime((Integer)fields[5]);
       partitions.put(partitionId, part);
 
       // We assume each partition has an unique SD.
@@ -224,7 +224,7 @@ class MetaStoreDirectSql {
       tmpBoolean = extractSqlBoolean(fields[8]);
       if (tmpBoolean != null) sd.setStoredAsSubDirectories(tmpBoolean);
       sd.setLocation((String)fields[9]);
-      if (fields[10] != null) sd.setNumBuckets((int)(long)fields[10]);
+      if (fields[10] != null) sd.setNumBuckets((Integer)fields[10]);
       sd.setOutputFormat((String)fields[11]);
       sdSb.append(sdId).append(",");
       part.setSd(sd);
