@@ -58,11 +58,14 @@
   <property name="checkstyle.build.dir" location="${build.dir.hive}/checkstyle"/>
   <property name="rat.build.dir" location="${build.dir.hive}/rat"/>
   <property name="md5sum.format" value="{0}  {1}"/>
-  <!-- Properties for maven repositories -->
-  <property name="mvn.staging.repo.id" value="apache.staging.https"/>
-  <property name="mvn.staging.repo.url"
-    value="https://repository.apache.org/service/local/staging/deploy/maven2" />
 
+  <!-- Properties for maven repositories -->
+  <property name="mvn.staging.repo.id" value="sonatype-nexus-staging"/>
+  <property name="mvn.staging.repo.url"
+    value="https://oss.sonatype.org/service/local/staging/deploy/maven2"/>
+    <!-- value="https://repository.apache.org/service/local/staging/deploy/maven2" /> -->
+  <!-- Don't attach timestamp suffix to SNAPSHOT artifacts -->
+  <property name="uniqueVersion" value="false"/>
 
   <condition property="is-offline" value="true" else="false">
     <isset property="offline"/>
@@ -1128,6 +1131,7 @@
   <!-- Deploy a single artifact to the maven repository -->
   <target name="maven-publish-artifact">
     <echo message="Project: ${ant.project.name}"/>
+    <echo message="Maven pom dir: ${mvn.pom.dir}"/>
     <artifact:pom
        file="${mvn.pom.dir}/hive-${hive.project}-${version}.pom"
        id="hive.project.pom" />
@@ -1149,7 +1153,7 @@
       <elseif>
         <equals arg1="${mvn.publish.repo}" arg2="local"/>
         <then>
-          <artifact:install 
+          <artifact:install
               file="${mvn.jar.dir}/hive-${hive.project}-${version}.jar">
             <pom refid="hive.project.pom" />
           </artifact:install>
@@ -1169,6 +1173,7 @@
   <target name="maven-publish" depends="init,mvn-taskdef,maven-sign"
           description="Publish Maven artifacts">
     <echo message="Project: ${ant.project.name}"/>
+    <echo message="MVN Publish Repo: ${mvn.publish.repo}"/>
     <antcall target="maven-publish-artifact">
       <param name="hive.project" value="anttasks" />
     </antcall>
