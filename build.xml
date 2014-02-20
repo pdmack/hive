@@ -509,14 +509,6 @@
     <chmod perm="ugo+x" type="file" parallel="false">
       <fileset dir="${target.bin.dir}"/>
     </chmod>
-
-    <!-- Package the hcat stuff and pull it up into Hive's build dir -->
-    <ant antfile="${hive.root}/hcatalog/build.xml" target="package"
-        inheritAll="false"/>
-    <mkdir dir="${target.dir}/hcatalog"/>
-    <copy todir="${target.dir}/hcatalog">
-        <fileset dir="${hive.root}/hcatalog/build/hcatalog-${version}"/>
-    </copy>
   </target>
 
 
