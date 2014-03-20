@@ -29,14 +29,18 @@
     <dependency org="edu.berkeley.cs.shark" name="hive-exec" rev="${version}"
                 conf="compile->default" />
     <dependency org="org.apache.hbase" name="hbase" rev="${hbase.version}"
-                transitive="false">
-      <artifact name="hbase" type="jar"/>
-      <artifact name="hbase" type="test-jar" ext="jar"
-                m:classifier="tests"/>
-    </dependency>
+                transitive="false"/>
+    <dependency org="org.apache.hbase" name="hbase-client" rev="${hbase.version}"
+                transitive="false"/>
+    <dependency org="org.apache.hbase" name="hbase-common" rev="${hbase.version}"
+                transitive="false"/>
+    <dependency org="org.apache.hbase" name="hbase-server" rev="${hbase.version}"
+                transitive="false"/>
+    <dependency org="org.apache.hbase" name="hbase" rev="${hbase.version}"
+                transitive="false" m:classifier="tests"/>
     <dependency org="com.github.stephenc.high-scale-lib" name="high-scale-lib" rev="1.1.1"
                 transitive="false"/>
-    <dependency org="com.yammer.metrics" name="metrics-core" rev="${metrics-core.version}">
+    <dependency org="com.codahale.metrics" name="metrics-core" rev="${metrics-core.version}">
       <exclude org="org.slf4j" module="slf4j-api"/><!--causes a dual slf4j presence otherwise-->
     </dependency>
     <dependency org="org.codehaus.jackson" name="jackson-jaxrs" rev="${jackson.version}"/>
