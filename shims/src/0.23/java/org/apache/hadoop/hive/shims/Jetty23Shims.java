@@ -19,9 +19,9 @@ package org.apache.hadoop.hive.shims;
 
 import java.io.IOException;
 
-import org.mortbay.jetty.bio.SocketConnector;
-import org.mortbay.jetty.handler.RequestLogHandler;
-import org.mortbay.jetty.webapp.WebAppContext;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.handler.RequestLogHandler;
+import org.eclipse.jetty.webapp.WebAppContext;
 
 /**
  * Jetty23Shims.
@@ -34,20 +34,20 @@ public class Jetty23Shims implements JettyShims {
     return s;
   }
 
-  private static class Server extends org.mortbay.jetty.Server implements JettyShims.Server {
+  private static class Server extends org.eclipse.jetty.server.Server implements JettyShims.Server {
     public void addWar(String war, String contextPath) {
       WebAppContext wac = new WebAppContext();
       wac.setContextPath(contextPath);
       wac.setWar(war);
       RequestLogHandler rlh = new RequestLogHandler();
       rlh.setHandler(wac);
-      this.addHandler(rlh);
+      this.setHandler(rlh);
     }
 
     public void setupListenerHostPort(String listen, int port)
         throws IOException {
 
-      SocketConnector connector = new SocketConnector();
+      ServerConnector connector = new ServerConnector(this);
       connector.setPort(port);
       connector.setHost(listen);
       this.addConnector(connector);
