@@ -187,7 +187,9 @@
     <fileset dir="${build.dir.hive}" includes="*/*.jar"/>
     <fileset dir="${hive.root}/lib" includes="*.jar"/>
     <fileset dir="${build.ivy.lib.dir}/default" includes="junit*.jar" />
-    <fileset dir="${build.ivy.lib.dir}/hadoop0.${hadoop.mr.rev}.shim" includes="*.jar" erroronmissingdir="false" />
+    <fileset dir="${build.ivy.lib.dir}/hadoop0.${hadoop.mr.rev}.shim" includes="*.jar" 
+             excludes="**/asm-*.jar"
+             erroronmissingdir="false" />
     <fileset dir="${build.ivy.lib.dir}/default" includes="*.jar"
              excludes="**/hadoop-*.jar"
              erroronmissingdir="false"/>
