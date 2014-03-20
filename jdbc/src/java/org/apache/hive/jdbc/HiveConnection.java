@@ -170,7 +170,6 @@ public class HiveConnection implements java.sql.Connection {
 
     try {
       TOpenSessionResp openResp = client.OpenSession(openReq);
-
       // validate connection
       Utils.verifySuccess(openResp.getStatus());
       if (!supportedProtocols.contains(openResp.getServerProtocolVersion())) {
