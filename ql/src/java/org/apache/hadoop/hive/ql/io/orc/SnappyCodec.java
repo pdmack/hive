@@ -18,7 +18,7 @@
 
 package org.apache.hadoop.hive.ql.io.orc;
 
-import org.iq80.snappy.Snappy;
+import org.xerial.snappy.Snappy;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
