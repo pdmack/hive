@@ -46,7 +46,7 @@ ARXFLAGS = -x
 CC = gcc
 CFLAGS = -Wall -g -fPIC
 CXX = g++
-CXXFLAGS = -Wall -g -fPIC
+CXXFLAGS = -Wall -g -fPIC -DHAVE_STDINT_H
 LD = g++
 INSTALL = /usr/bin/install -c
 SHELL = /bin/sh
@@ -135,7 +135,7 @@ LIB_FB303_ADD = -L$(LIB_FB303_DIR) -lfb303
 LIB_FB303_AR  = $(LIB_FB303_DIR)/libfb303.a
 
 
-all:: $(AR_TARGET) $(SO_TARGET) $(HIVE_CLIENT_TEST)
+all:: $(SO_TARGET) $(HIVE_CLIENT_TEST)
 
 $(AR_TARGET): $(METASTORE_OBJS) $(SERVICE_OBJS) $(QL_OBJS) $(ODBC_OBJS)
 	if test -z '$(THRIFT_HOME)'; then echo 'THRIFT_HOME directory?'; exit 1; else exit 0; fi
@@ -189,5 +189,5 @@ uninstall:
 clean:
 	rm -rf $(ODBC_BUILD_DIR) $(OBJ_SERVICE_BUILD_DIR) $(OBJ_QL_BUILD_DIR) $(OBJ_METASTORE_BUILD_DIR)
 
-test: $(AR_TARGET) $(SO_TARGET) $(HIVE_CLIENT_TEST)
+test: $(SO_TARGET) $(HIVE_CLIENT_TEST)
 	LD_LIBRARY_PATH=$(LIB_ODBC_BUILD_DIR):$(LIB_THRIFT_DIR):$(LIB_FB303_DIR):$(LD_LIBRARY_PATH) $(HIVE_CLIENT_TEST)

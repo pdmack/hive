@@ -18,6 +18,7 @@
 
 #include <assert.h>
 #include <iostream>
+#include <arpa/inet.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/algorithm/string.hpp>
 
