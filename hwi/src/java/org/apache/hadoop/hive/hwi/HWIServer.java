@@ -103,7 +103,7 @@ public class HWIServer {
           webServer.join();
           l4j.debug(" HWI Web Server is started.");
           break;
-        } catch (org.mortbay.util.MultiException ex) {
+        } catch (org.eclipse.jetty.util.MultiException ex) {
           throw ex;
         }
       }
